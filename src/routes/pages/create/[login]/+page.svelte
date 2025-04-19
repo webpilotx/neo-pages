@@ -5,7 +5,8 @@
 
   let repositories = data.repositories;
   let selectedRepo = null;
-  let login = data.login; // Access the login passed from the server
+  let accounts = data.accounts; // List of all accounts
+  let selectedLogin = data.login; // Currently selected login
 
   let currentPage = 1;
   const itemsPerPage = 6;
@@ -32,6 +33,10 @@
     currentPage = page;
   }
 
+  function changeLogin() {
+    goto(`/pages/create/${selectedLogin}`);
+  }
+
   const totalPages = Math.ceil(repositories.length / itemsPerPage);
 
   const authorizeUrl = `https://github.com/login/oauth/authorize?client_id=${PUBLIC_GITHUB_CLIENT_ID}&scope=repo`;
@@ -46,7 +51,22 @@
   }
 </script>
 
-<h1 class="text-2xl font-bold mb-4">Select a Repository for {login}</h1>
+<h1 class="text-2xl font-bold mb-4">Select a Repository</h1>
+<div class="mb-4">
+  <label for="account-select" class="block text-sm font-medium text-gray-700"
+    >Select Account:</label
+  >
+  <select
+    id="account-select"
+    bind:value={selectedLogin}
+    on:change={changeLogin}
+    class="mt-1 block w-full border-gray-300 rounded shadow-sm"
+  >
+    {#each accounts as account}
+      <option value={account.login}>{account.login}</option>
+    {/each}
+  </select>
+</div>
 <a
   href={authorizeUrl}
   class="inline-block bg-green-500 text-white px-4 py-2 rounded mb-4 hover:bg-green-600"

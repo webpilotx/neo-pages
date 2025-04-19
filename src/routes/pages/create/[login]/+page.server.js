@@ -13,7 +13,7 @@ export async function load({ params }) {
     .limit(1);
 
   if (!account.length) {
-    return { repositories: [] };
+    return { repositories: [], accounts: [] };
   }
 
   const accessToken = account[0].accessToken;
@@ -27,5 +27,8 @@ export async function load({ params }) {
 
   const repositories = response.ok ? await response.json() : [];
 
-  return { repositories };
+  // Fetch all accounts
+  const accounts = await db.select().from(accountsTable);
+
+  return { repositories, accounts, login };
 }
