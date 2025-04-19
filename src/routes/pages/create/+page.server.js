@@ -24,24 +24,65 @@ export async function load() {
   const accounts = await db.select().from(accountsTable);
   const repositories = [];
 
-  for (const account of accounts) {
-    const response = await fetch("https://api.github.com/user/repos", {
-      headers: {
-        Authorization: `Bearer ${account.accessToken}`,
-      },
-    });
-    if (response.ok) {
-      const repos = await response.json();
-      repositories.push(
-        ...repos.map((repo) => ({
-          id: repo.id,
-          name: repo.name,
-          full_name: repo.full_name,
-          clone_url: repo.clone_url,
-        }))
+  await Promise.all(
+    accounts.map(async (account) => {
+      // Fetch user repositories
+      const userReposResponse = await fetch(
+        "https://api.github.com/user/repos",
+        {
+          headers: {
+            Authorization: `Bearer ${account.accessToken}`,
+          },
+        }
       );
-    }
-  }
+      if (userReposResponse.ok) {
+        const userRepos = await userReposResponse.json();
+        repositories.push(
+          ...userRepos.map((repo) => ({
+            id: repo.id,
+            name: repo.name,
+            full_name: repo.full_name,
+            clone_url: repo.clone_url,
+          }))
+        );
+      }
+
+      // Fetch organizations
+      const orgsResponse = await fetch("https://api.github.com/user/orgs", {
+        headers: {
+          Authorization: `Bearer ${account.accessToken}`,
+        },
+      });
+      if (orgsResponse.ok) {
+        const orgs = await orgsResponse.json();
+
+        // Fetch repositories for each organization
+        await Promise.all(
+          orgs.map(async (org) => {
+            const orgReposResponse = await fetch(
+              `https://api.github.com/orgs/${org.login}/repos`,
+              {
+                headers: {
+                  Authorization: `Bearer ${account.accessToken}`,
+                },
+              }
+            );
+            if (orgReposResponse.ok) {
+              const orgRepos = await orgReposResponse.json();
+              repositories.push(
+                ...orgRepos.map((repo) => ({
+                  id: repo.id,
+                  name: repo.name,
+                  full_name: repo.full_name,
+                  clone_url: repo.clone_url,
+                }))
+              );
+            }
+          })
+        );
+      }
+    })
+  );
 
   return { repositories };
 }

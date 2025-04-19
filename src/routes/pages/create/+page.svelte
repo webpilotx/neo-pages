@@ -1,9 +1,17 @@
 <script>
   import { PUBLIC_GITHUB_CLIENT_ID } from "$env/static/public";
+  import { goto } from "$app/navigation";
   export let data;
   let repositories = data.repositories;
+  let selectedRepo = null;
 
   const authorizeUrl = `https://github.com/login/oauth/authorize?client_id=${PUBLIC_GITHUB_CLIENT_ID}&scope=repo`;
+
+  function beginSetup() {
+    if (selectedRepo) {
+      goto(`/pages/create/${selectedRepo.full_name}`);
+    }
+  }
 
   async function selectRepo(repo) {
     await fetch("/api/pages", {
@@ -22,19 +30,24 @@
 >
   Authorize GitHub Access
 </a>
-<ul class="space-y-4">
+<div class="grid grid-cols-2 md:grid-cols-3 gap-4">
   {#each repositories as repo}
-    <li class="p-4 bg-white shadow rounded flex justify-between items-center">
-      <div>
-        <strong class="text-lg">{repo.name}</strong>
-        <p class="text-sm text-gray-600">{repo.full_name}</p>
-      </div>
-      <button
-        on:click={() => selectRepo(repo)}
-        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-      >
-        Select
-      </button>
-    </li>
+    <div
+      class="p-4 bg-white shadow rounded cursor-pointer border-2 {selectedRepo?.id ===
+      repo.id
+        ? 'border-blue-500'
+        : 'border-transparent'}"
+      on:click={() => (selectedRepo = repo)}
+    >
+      <strong class="text-lg">{repo.name}</strong>
+      <p class="text-sm text-gray-600">{repo.full_name}</p>
+    </div>
   {/each}
-</ul>
+</div>
+<button
+  on:click={beginSetup}
+  class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
+  disabled={!selectedRepo}
+>
+  Begin Setup
+</button>
