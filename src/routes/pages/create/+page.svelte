@@ -1,6 +1,9 @@
 <script>
+  import { PUBLIC_GITHUB_CLIENT_ID } from "$env/static/public";
   export let data;
   let repositories = data.repositories;
+
+  const authorizeUrl = `https://github.com/login/oauth/authorize?client_id=${PUBLIC_GITHUB_CLIENT_ID}&scope=repo`;
 
   async function selectRepo(repo) {
     await fetch("/api/pages", {
@@ -13,6 +16,12 @@
 </script>
 
 <h1 class="text-2xl font-bold mb-4">Select a Repository</h1>
+<a
+  href={authorizeUrl}
+  class="inline-block bg-green-500 text-white px-4 py-2 rounded mb-4 hover:bg-green-600"
+>
+  Authorize GitHub Access
+</a>
 <ul class="space-y-4">
   {#each repositories as repo}
     <li class="p-4 bg-white shadow rounded flex justify-between items-center">
