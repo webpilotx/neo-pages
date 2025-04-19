@@ -2,8 +2,10 @@
   import { PUBLIC_GITHUB_CLIENT_ID } from "$env/static/public";
   import { goto } from "$app/navigation";
   export let data;
+
   let repositories = data.repositories;
   let selectedRepo = null;
+  let login = data.login; // Access the login passed from the server
 
   let currentPage = 1;
   const itemsPerPage = 6;
@@ -35,22 +37,16 @@
   const authorizeUrl = `https://github.com/login/oauth/authorize?client_id=${PUBLIC_GITHUB_CLIENT_ID}&scope=repo`;
 
   function beginSetup() {
-    if (selectedRepo) {
-      goto(`/pages/create/${selectedRepo.full_name}`);
+    if (selectedRepo?.owner?.login) {
+      const repoFullname = selectedRepo.full_name; // Pass the full repository name
+      goto(`/pages/create/${encodeURIComponent(repoFullname)}`);
+    } else {
+      console.error("Selected repository or owner information is missing.");
     }
-  }
-
-  async function selectRepo(repo) {
-    await fetch("/api/pages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(repo),
-    });
-    window.location.href = "/pages";
   }
 </script>
 
-<h1 class="text-2xl font-bold mb-4">Select a Repository</h1>
+<h1 class="text-2xl font-bold mb-4">Select a Repository for {login}</h1>
 <a
   href={authorizeUrl}
   class="inline-block bg-green-500 text-white px-4 py-2 rounded mb-4 hover:bg-green-600"

@@ -1,6 +1,7 @@
 <script>
   export let data;
   let pages = data.pages;
+  let firstLogin = data.firstLogin; // First available accountsTable.login
 
   async function deletePage(id) {
     await fetch(`/api/pages/${id}`, { method: "DELETE" });
@@ -10,7 +11,7 @@
 
 <h1 class="text-2xl font-bold mb-4">Manage Pages</h1>
 <a
-  href="/pages/create"
+  href={`/pages/create/${firstLogin}`}
   class="inline-block bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600"
 >
   Create New Page
