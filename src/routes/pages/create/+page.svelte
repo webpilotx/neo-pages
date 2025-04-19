@@ -26,6 +26,12 @@
     }
   }
 
+  function goToPage(page) {
+    currentPage = page;
+  }
+
+  const totalPages = Math.ceil(repositories.length / itemsPerPage);
+
   const authorizeUrl = `https://github.com/login/oauth/authorize?client_id=${PUBLIC_GITHUB_CLIENT_ID}&scope=repo`;
 
   function beginSetup() {
@@ -73,7 +79,20 @@
   >
     Previous
   </button>
-  <p>Page {currentPage} of {Math.ceil(repositories.length / itemsPerPage)}</p>
+  <div class="flex space-x-2">
+    {#each Array(totalPages)
+      .fill(0)
+      .map((_, i) => i + 1) as page}
+      <button
+        on:click={() => goToPage(page)}
+        class="px-4 py-2 rounded {currentPage === page
+          ? 'bg-blue-500 text-white'
+          : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}"
+      >
+        {page}
+      </button>
+    {/each}
+  </div>
   <button
     on:click={nextPage}
     class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 disabled:opacity-50"
