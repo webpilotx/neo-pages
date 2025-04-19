@@ -5,6 +5,27 @@
   let repositories = data.repositories;
   let selectedRepo = null;
 
+  let currentPage = 1;
+  const itemsPerPage = 6;
+
+  function getPaginatedRepos() {
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    return repositories.slice(start, end);
+  }
+
+  function nextPage() {
+    if (currentPage * itemsPerPage < repositories.length) {
+      currentPage++;
+    }
+  }
+
+  function prevPage() {
+    if (currentPage > 1) {
+      currentPage--;
+    }
+  }
+
   const authorizeUrl = `https://github.com/login/oauth/authorize?client_id=${PUBLIC_GITHUB_CLIENT_ID}&scope=repo`;
 
   function beginSetup() {
@@ -31,7 +52,7 @@
   Authorize GitHub Access
 </a>
 <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-  {#each repositories as repo}
+  {#each getPaginatedRepos() as repo}
     <div
       class="p-4 bg-white shadow rounded cursor-pointer border-2 {selectedRepo?.id ===
       repo.id
@@ -43,6 +64,23 @@
       <p class="text-sm text-gray-600">{repo.full_name}</p>
     </div>
   {/each}
+</div>
+<div class="flex justify-between items-center mt-4">
+  <button
+    on:click={prevPage}
+    class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 disabled:opacity-50"
+    disabled={currentPage === 1}
+  >
+    Previous
+  </button>
+  <p>Page {currentPage} of {Math.ceil(repositories.length / itemsPerPage)}</p>
+  <button
+    on:click={nextPage}
+    class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 disabled:opacity-50"
+    disabled={currentPage * itemsPerPage >= repositories.length}
+  >
+    Next
+  </button>
 </div>
 <button
   on:click={beginSetup}
