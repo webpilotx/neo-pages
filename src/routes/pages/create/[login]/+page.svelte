@@ -44,7 +44,9 @@
   function beginSetup() {
     if (selectedRepo?.owner?.login) {
       const repoFullname = selectedRepo.full_name; // Pass the full repository name
-      goto(`/pages/create/${encodeURIComponent(repoFullname)}`);
+      goto(
+        `/pages/create/${selectedLogin}/${encodeURIComponent(repoFullname)}`
+      );
     } else {
       console.error("Selected repository or owner information is missing.");
     }
