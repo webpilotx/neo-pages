@@ -42,13 +42,13 @@
   const authorizeUrl = `https://github.com/login/oauth/authorize?client_id=${PUBLIC_GITHUB_CLIENT_ID}&scope=repo`;
 
   function beginSetup() {
-    if (selectedRepo?.owner?.login) {
-      const repoFullname = selectedRepo.full_name; // Pass the full repository name
+    if (selectedRepo?.full_name) {
+      const repoFullname = selectedRepo.full_name; // Use the full repository name from the selectedRepo
       goto(
         `/pages/create/${selectedLogin}/${encodeURIComponent(repoFullname)}`
       );
     } else {
-      console.error("Selected repository or owner information is missing.");
+      console.error("Selected repository information is missing.");
     }
   }
 </script>
