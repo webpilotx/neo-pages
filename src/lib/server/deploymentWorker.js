@@ -11,6 +11,13 @@ export function triggerDeploymentWorker(deploymentId) {
     fs.mkdirSync(logDir, { recursive: true });
   }
 
+  // Initialize the log file with a starting message
+  fs.writeFileSync(
+    logFilePath,
+    `[${new Date().toISOString()}] Log initialized for deployment ID: ${deploymentId}\n`,
+    { flag: "a" }
+  );
+
   const logStream = fs.createWriteStream(logFilePath, { flags: "a" });
 
   const worker = spawn("node", ["./workers/deploy.js", deploymentId], {
