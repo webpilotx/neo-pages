@@ -11,12 +11,17 @@ export function triggerDeploymentWorker(deploymentId) {
     fs.mkdirSync(logDir, { recursive: true });
   }
 
-  // Initialize the log file with a starting message
-  fs.writeFileSync(
-    logFilePath,
-    `[${new Date().toISOString()}] Log initialized for deployment ID: ${deploymentId}\n`,
-    { flag: "a" }
-  );
+  // Function to log deployment stages
+  const logStage = (stage) => {
+    fs.writeFileSync(
+      logFilePath,
+      `[${new Date().toISOString()}] Deployment stage: ${stage}\n`,
+      { flag: "a" }
+    );
+  };
+
+  // Log the starting stage
+  logStage("Deployment process started");
 
   const logStream = fs.createWriteStream(logFilePath, { flags: "a" });
 
@@ -28,6 +33,15 @@ export function triggerDeploymentWorker(deploymentId) {
   // Stream logs to the log file
   worker.stdout.pipe(logStream);
   worker.stderr.pipe(logStream);
+
+  worker.on("close", (code) => {
+    // Log the completed stage
+    const stage =
+      code === 0
+        ? "Deployment process completed successfully"
+        : "Deployment process completed with errors";
+    logStage(stage);
+  });
 
   worker.unref(); // Allow the worker to run independently
 }
