@@ -1,19 +1,26 @@
 <script>
-  import { onMount } from "svelte";
-  export let data;
+  let logContent = "";
 
-  let logContent = data.logContent;
+  async function streamLog() {
+    if (typeof window === "undefined") return; // Ensure this runs only on the client side
 
-  async function fetchLog() {
     const response = await fetch(window.location.href);
-    const updatedData = await response.json();
-    logContent = updatedData.logContent;
+    if (!response.body) {
+      logContent = "Failed to stream log.";
+      return;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      logContent = decoder.decode(value);
+    }
   }
 
-  onMount(() => {
-    const interval = setInterval(fetchLog, 2000); // Poll every 2 seconds
-    return () => clearInterval(interval);
-  });
+  streamLog();
 </script>
 
 <h1 class="text-2xl font-bold mb-4">Deployment Log</h1>
