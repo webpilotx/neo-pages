@@ -1,7 +1,13 @@
 import { error } from "@sveltejs/kit";
 import { db } from "$lib/server/db";
-import { accountsTable, pagesTable, envsTable } from "$lib/server/db/schema";
+import {
+  accountsTable,
+  pagesTable,
+  envsTable,
+  deploymentsTable,
+} from "$lib/server/db/schema";
 import { eq } from "drizzle-orm";
+import { triggerDeploymentWorker } from "$lib/server/deploymentWorker"; // Assume this is a utility to trigger the worker
 
 export async function load({ params }) {
   const { login, repoFullname } = params;
@@ -79,6 +85,17 @@ export const actions = {
         }))
       );
     }
+
+    // Create a new deployment entry
+    const [deployment] = await db
+      .insert(deploymentsTable)
+      .values({
+        pageId: page.id,
+      })
+      .returning({ id: deploymentsTable.id });
+
+    // Trigger the Node.js worker for deployment
+    triggerDeploymentWorker(deployment.id);
 
     return { success: true };
   },
