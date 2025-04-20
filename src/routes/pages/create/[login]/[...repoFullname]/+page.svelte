@@ -8,14 +8,14 @@
   let branch = branches.length > 0 ? branches[0].name : "";
   let buildScript = "";
   let buildOutputDir = "";
-  let envVars = [{ name: "", value: "" }];
+  let envVars = []; // Default to 0 environment variables
 
   function addEnvVar() {
-    envVars.push({ name: "", value: "" });
+    envVars = [...envVars, { name: "", value: "" }]; // Ensure reactivity by creating a new array
   }
 
   function removeEnvVar(index) {
-    envVars.splice(index, 1);
+    envVars = envVars.filter((_, i) => i !== index); // Ensure reactivity by creating a new array
   }
 
   async function createAndDeploy() {
@@ -38,16 +38,22 @@
 <h1 class="text-2xl font-bold mb-4">Setup Page for {repoFullname}</h1>
 <form on:submit|preventDefault={createAndDeploy} class="space-y-4">
   <div>
-    <label class="block text-sm font-medium text-gray-700">Page Name:</label>
+    <label for="page-name" class="block text-sm font-medium text-gray-700"
+      >Page Name:</label
+    >
     <input
+      id="page-name"
       type="text"
       bind:value={pageName}
       class="mt-1 block w-full border-gray-300 rounded shadow-sm"
     />
   </div>
   <div>
-    <label class="block text-sm font-medium text-gray-700">Branch:</label>
+    <label for="branch-select" class="block text-sm font-medium text-gray-700"
+      >Branch:</label
+    >
     <select
+      id="branch-select"
       bind:value={branch}
       class="mt-1 block w-full border-gray-300 rounded shadow-sm"
     >
@@ -57,8 +63,11 @@
     </select>
   </div>
   <div>
-    <label class="block text-sm font-medium text-gray-700">Build Script:</label>
+    <label for="build-script" class="block text-sm font-medium text-gray-700"
+      >Build Script:</label
+    >
     <textarea
+      id="build-script"
       bind:value={buildScript}
       rows="4"
       placeholder="e.g., npm run build"
@@ -66,10 +75,13 @@
     ></textarea>
   </div>
   <div>
-    <label class="block text-sm font-medium text-gray-700"
+    <label
+      for="build-output-dir"
+      class="block text-sm font-medium text-gray-700"
       >Build Output Directory:</label
     >
     <input
+      id="build-output-dir"
       type="text"
       bind:value={buildOutputDir}
       placeholder="e.g., dist/"
