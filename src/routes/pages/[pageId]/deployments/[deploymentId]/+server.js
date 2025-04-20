@@ -9,11 +9,17 @@ export async function GET({ params }) {
     return new Response("Log file not found.", { status: 404 });
   }
 
+  let watcher;
+
   const stream = new ReadableStream({
     start(controller) {
       const sendChunk = (chunk) => {
-        if (!controller.closed) {
+        try {
           controller.enqueue(new TextEncoder().encode(chunk));
+        } catch (error) {
+          if (error.code !== "ERR_INVALID_STATE") {
+            console.error("Error enqueuing chunk:", error);
+          }
         }
       };
 
@@ -22,25 +28,21 @@ export async function GET({ params }) {
       sendChunk(initialContent);
 
       // Watch for changes to the log file
-      const watcher = fs.watch(
-        logFilePath,
-        { encoding: "utf-8" },
-        (eventType) => {
-          if (eventType === "change") {
-            const updatedContent = fs.readFileSync(logFilePath, "utf-8");
-            sendChunk(updatedContent);
-          }
+      watcher = fs.watch(logFilePath, { encoding: "utf-8" }, (eventType) => {
+        if (eventType === "change") {
+          const updatedContent = fs.readFileSync(logFilePath, "utf-8");
+          sendChunk(updatedContent);
         }
-      );
+      });
 
       // Cleanup when the stream is closed
       controller.close = () => {
-        watcher.close();
+        if (watcher) watcher.close();
       };
     },
     cancel() {
       // Ensure the watcher is closed when the stream is canceled
-      watcher.close();
+      if (watcher) watcher.close();
     },
   });
 
