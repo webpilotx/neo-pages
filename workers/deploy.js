@@ -1,12 +1,12 @@
-import "dotenv/config"; // Load environment variables
-import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
-import * as schema from "../src/lib/server/db/schema.js"; // Import only the schema
-const { deploymentsTable, pagesTable, envsTable, accountsTable } = schema; // Include accountsTable
-import { eq } from "drizzle-orm";
 import { execSync } from "child_process";
+import "dotenv/config"; // Load environment variables
+import { eq } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/better-sqlite3";
 import fs from "fs";
 import path from "path";
+import * as schema from "../src/lib/server/db/schema.js"; // Import only the schema
+const { deploymentsTable, pagesTable, envsTable, accountsTable } = schema; // Include accountsTable
 
 const client = new Database(process.env.DATABASE_URL);
 
