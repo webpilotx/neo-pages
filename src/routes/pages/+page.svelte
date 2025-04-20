@@ -27,25 +27,35 @@
   </a>
 {/if}
 {#if pages.length > 0}
-  <ul>
-    {#each pages as page}
-      <li class="flex items-center justify-between border-b py-2">
-        <span>{page.name}</span>
-        <a href={`/pages/${page.id}`} class="text-blue-500 hover:underline">
-          {page.name}
-        </a>
-        <form method="post" action="?/delete">
-          <input type="hidden" name="pageId" value={page.id} />
-          <button
-            type="submit"
-            class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-          >
-            Delete
-          </button>
-        </form>
-      </li>
-    {/each}
-  </ul>
+  <table class="table-auto w-full border-collapse border border-gray-300">
+    <thead>
+      <tr class="bg-gray-100">
+        <th class="border border-gray-300 px-4 py-2 text-left">Name</th>
+        <th class="border border-gray-300 px-4 py-2 text-left">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {#each pages as page}
+        <tr>
+          <td class="border border-gray-300 px-4 py-2">{page.name}</td>
+          <td class="border border-gray-300 px-4 py-2">
+            <a href={`/pages/${page.id}`} class="text-blue-500 hover:underline">
+              View
+            </a>
+            <form method="post" action="?/delete" class="inline-block ml-4">
+              <input type="hidden" name="pageId" value={page.id} />
+              <button
+                type="submit"
+                class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+              >
+                Delete
+              </button>
+            </form>
+          </td>
+        </tr>
+      {/each}
+    </tbody>
+  </table>
 {:else}
   <p>No pages available.</p>
 {/if}
