@@ -1,7 +1,7 @@
 <script>
   import { enhance } from "$app/forms";
   export let data;
-  export let pages; // Assume `pages` is passed as a prop containing the list of pages
+  export const pages = []; // Converted to a constant if needed externally
 
   let login = data.login;
   let repoFullname = data.repoFullname;
@@ -86,7 +86,9 @@
     >
     {#each envVars as env, index}
       <div class="flex space-x-2 mt-2">
+        <label for={`env-name-${index}`} class="sr-only">Name</label>
         <input
+          id={`env-name-${index}`}
           type="text"
           name={`envVars[${index}][name]`}
           placeholder="Name"
@@ -94,7 +96,9 @@
           required
           class="flex-1 border-gray-300 rounded shadow-sm"
         />
+        <label for={`env-value-${index}`} class="sr-only">Value</label>
         <input
+          id={`env-value-${index}`}
           type="text"
           name={`envVars[${index}][value]`}
           placeholder="Value"
