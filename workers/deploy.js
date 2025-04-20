@@ -17,20 +17,9 @@ if (!deploymentId) {
 }
 
 (async () => {
-  const logDir = path.resolve(`/var/www/neo-pages/logs`);
-  const logFilePath = path.join(logDir, `${deploymentId}.log`);
-
-  // Ensure the log directory exists
-  if (!fs.existsSync(logDir)) {
-    fs.mkdirSync(logDir, { recursive: true });
-  }
-
-  const logStream = fs.createWriteStream(logFilePath, { flags: "a" });
-
   const log = (message) => {
     const timestamp = new Date().toISOString();
-    logStream.write(`[${timestamp}] ${message}\n`);
-    console.log(message);
+    console.log(`[${timestamp}] ${message}`);
   };
 
   try {
@@ -66,18 +55,12 @@ if (!deploymentId) {
 
     const repoUrl = `https://${page.accessToken}@github.com/${page.repo}`;
     const baseDir = path.resolve(`/var/www/neo-pages/pages`);
-    const repoDir = path.join(baseDir, `${page.id}`); // Simplified path to use only page ID
-
-    // Ensure the base directory exists
-    if (!fs.existsSync(baseDir)) {
-      fs.mkdirSync(baseDir, { recursive: true });
-      log(`Created base directory: ${baseDir}`);
-    }
+    const repoDir = path.join(baseDir, `${page.id}`);
 
     const execWithLogging = (command, options = {}) => {
       log(`Executing: ${command}`);
       execSync(command, {
-        stdio: ["ignore", logStream, logStream], // Redirect stdout and stderr to the log stream
+        stdio: "inherit", // Log directly to console
         ...options,
       });
     };
@@ -114,44 +97,6 @@ if (!deploymentId) {
       execWithLogging(page.buildScript, { cwd: repoDir });
     }
 
-    // Determine the Node.js binary path
-    const nodeBinary = process.execPath;
-
-    // Determine the working directory for the service
-    const workingDir = page.buildOutputDir
-      ? path.join(repoDir, page.buildOutputDir)
-      : repoDir;
-
-    // Write systemd service file
-    const serviceFilePath = `${process.env.HOME}/.config/systemd/user/${page.name}-${page.id}.service`; // Include page.id for uniqueness
-    const envVarsContent = envVars
-      .map((env) => `Environment="${env.name}=${env.value}"`)
-      .join("\n");
-    const serviceFileContent = `
-[Unit]
-Description=Service for ${page.name}
-After=network.target
-
-[Service]
-Type=simple
-WorkingDirectory=${repoDir} // Always use repoDir
-ExecStart=${nodeBinary} ${workingDir}/index.js
-Restart=always
-${envVarsContent}
-
-[Install]
-WantedBy=default.target
-    `;
-    fs.mkdirSync(path.dirname(serviceFilePath), { recursive: true }); // Ensure the directory exists
-    fs.writeFileSync(serviceFilePath, serviceFileContent);
-    log(`Systemd service file written to ${serviceFilePath}`);
-
-    // Reload systemd and restart the service at --user level
-    execWithLogging("systemctl --user daemon-reload");
-    execWithLogging(`systemctl --user restart ${page.name}-${page.id}.service`);
-    execWithLogging(`systemctl --user enable ${page.name}-${page.id}.service`);
-    log(`Service ${page.name}-${page.id} restarted and enabled successfully.`);
-
     // Update deployment status to success
     await db
       .update(deploymentsTable)
@@ -169,7 +114,5 @@ WantedBy=default.target
       .where(eq(deploymentsTable.id, deploymentId));
 
     process.exit(1);
-  } finally {
-    logStream.end();
   }
 })();

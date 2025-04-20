@@ -9,22 +9,34 @@
 <nav class="mt-4">
   <ul class="list-disc pl-5">
     <li>
-      <a href="./{data.page.id}/edit" class="text-blue-500 hover:underline">
+      <a href={`./${data.page.id}/edit`} class="text-blue-500 hover:underline">
         Edit Page
       </a>
     </li>
     <li>
       <a
-        href="./{data.page.id}/deployments"
+        href={`./${data.page.id}/deployments`}
         class="text-blue-500 hover:underline"
       >
         Deployments
       </a>
     </li>
     <li>
-      <a href="./{data.page.id}/settings" class="text-blue-500 hover:underline">
+      <a
+        href={`./${data.page.id}/settings`}
+        class="text-blue-500 hover:underline"
+      >
         Settings
       </a>
     </li>
   </ul>
 </nav>
+
+<form method="post" action="?/deploy">
+  <button
+    type="submit"
+    class="mt-4 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+  >
+    Trigger Deploy
+  </button>
+</form>
