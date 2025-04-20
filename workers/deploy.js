@@ -2,7 +2,7 @@ import "dotenv/config"; // Load environment variables
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
 import * as schema from "../src/lib/server/db/schema.js"; // Import only the schema
-const { deploymentsTable, pagesTable, envsTable } = schema; // Destructure the tables from the schema
+const { deploymentsTable, pagesTable, envsTable, accountsTable } = schema; // Include accountsTable
 import { eq } from "drizzle-orm";
 import { execSync } from "child_process";
 import fs from "fs";
@@ -50,13 +50,24 @@ if (!deploymentId) {
       process.exit(1);
     }
 
+    // Fetch the associated account for the page
+    const [account] = await db
+      .select()
+      .from(accountsTable)
+      .where(eq(accountsTable.id, page.accountLogin));
+
+    if (!account || !account.accessToken) {
+      log("Associated account or access token not found.");
+      process.exit(1);
+    }
+
     // Fetch environment variables
     const envVars = await db
       .select()
       .from(envsTable)
       .where(eq(envsTable.pageId, page.id));
 
-    const repoUrl = `https://${page.accessToken}@github.com/${page.repo}`;
+    const repoUrl = `https://${account.accessToken}@github.com/${page.repo}`;
     const baseDir = path.resolve(`${process.cwd()}/pages`);
     const repoDir = path.join(baseDir, `${page.id}`);
 
@@ -70,12 +81,12 @@ if (!deploymentId) {
 
     // Clone or pull the repository
     if (!fs.existsSync(repoDir)) {
-      log(`Cloning repository: ${repoUrl} (branch: ${page.branch})`);
+      log(`Cloning repository: [REDACTED] (branch: ${page.branch})`); // Hide accessToken in logs
       execWithLogging(
         `git clone --branch ${page.branch} ${repoUrl} ${repoDir}`
       );
     } else {
-      log(`Pulling latest changes for repository: ${repoUrl}`);
+      log(`Pulling latest changes for repository: [REDACTED]`); // Hide accessToken in logs
       execWithLogging(`git -C ${repoDir} reset --hard`);
       execWithLogging(`git -C ${repoDir} checkout ${page.branch}`);
       execWithLogging(`git -C ${repoDir} pull origin ${page.branch}`);
@@ -118,6 +129,6 @@ if (!deploymentId) {
 
     process.exit(1);
   } finally {
-    sqlite.close(); // Close the SQLite database connection
+    client.close(); // Close the SQLite database connection
   }
 })();
