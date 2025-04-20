@@ -54,7 +54,7 @@ if (!deploymentId) {
     const [account] = await db
       .select()
       .from(accountsTable)
-      .where(eq(accountsTable.id, page.accountLogin));
+      .where(eq(accountsTable.login, page.accountLogin));
 
     if (!account || !account.accessToken) {
       log("Associated account or access token not found.");
@@ -72,7 +72,12 @@ if (!deploymentId) {
     const repoDir = path.join(baseDir, `${page.id}`);
 
     const execWithLogging = (command, options = {}) => {
-      log(`Executing: ${command}`);
+      // Redact sensitive information (e.g., accessToken) from the command
+      const redactedCommand = command.replace(
+        account.accessToken,
+        "[REDACTED]"
+      );
+      log(`Executing: ${redactedCommand}`);
       execSync(command, {
         stdio: "inherit",
         ...options,

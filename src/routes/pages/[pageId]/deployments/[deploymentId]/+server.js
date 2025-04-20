@@ -12,7 +12,9 @@ export async function GET({ params }) {
   const stream = new ReadableStream({
     start(controller) {
       const sendChunk = (chunk) => {
-        controller.enqueue(new TextEncoder().encode(chunk));
+        if (!controller.closed) {
+          controller.enqueue(new TextEncoder().encode(chunk));
+        }
       };
 
       // Read the initial content of the log file
@@ -35,6 +37,10 @@ export async function GET({ params }) {
       controller.close = () => {
         watcher.close();
       };
+    },
+    cancel() {
+      // Ensure the watcher is closed when the stream is canceled
+      watcher.close();
     },
   });
 

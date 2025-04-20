@@ -1,5 +1,6 @@
 import { db } from "$lib/server/db";
 import { pagesTable } from "$lib/server/db/schema";
+import { eq } from "drizzle-orm";
 
 export async function load() {
   const pages = await db.select().from(pagesTable);
