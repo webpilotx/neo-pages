@@ -1,13 +1,16 @@
-import { db } from "../src/lib/server/db";
-import {
-  deploymentsTable,
-  pagesTable,
-  envsTable,
-} from "../src/lib/server/db/schema";
+import "dotenv/config"; // Load environment variables
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import Database from "better-sqlite3";
+import * as schema from "../src/lib/server/db/schema.js"; // Import only the schema
+const { deploymentsTable, pagesTable, envsTable } = schema; // Destructure the tables from the schema
 import { eq } from "drizzle-orm";
 import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
+
+const client = new Database(process.env.DATABASE_URL);
+
+const db = drizzle(client, { schema });
 
 const deploymentId = process.argv[2];
 
@@ -54,13 +57,13 @@ if (!deploymentId) {
       .where(eq(envsTable.pageId, page.id));
 
     const repoUrl = `https://${page.accessToken}@github.com/${page.repo}`;
-    const baseDir = path.resolve(`${process.cwd()}/pages`); // Use current working directory
+    const baseDir = path.resolve(`${process.cwd()}/pages`);
     const repoDir = path.join(baseDir, `${page.id}`);
 
     const execWithLogging = (command, options = {}) => {
       log(`Executing: ${command}`);
       execSync(command, {
-        stdio: "inherit", // Log directly to console
+        stdio: "inherit",
         ...options,
       });
     };
@@ -114,5 +117,7 @@ if (!deploymentId) {
       .where(eq(deploymentsTable.id, deploymentId));
 
     process.exit(1);
+  } finally {
+    sqlite.close(); // Close the SQLite database connection
   }
 })();
