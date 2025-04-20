@@ -1,6 +1,6 @@
 import { error } from "@sveltejs/kit";
 import { db } from "$lib/server/db";
-import { accountsTable } from "$lib/server/db/schema";
+import { accountsTable, pagesTable, envsTable } from "$lib/server/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function load({ params }) {
@@ -45,3 +45,41 @@ export async function load({ params }) {
     branches,
   };
 }
+
+export const actions = {
+  default: async ({ request, params }) => {
+    const formData = await request.formData();
+    const repo = params.repoFullname;
+    const name = formData.get("name");
+    const branch = formData.get("branch");
+    const buildScript = formData.get("buildScript");
+    const buildOutputDir = formData.get("buildOutputDir");
+    const envVars = JSON.parse(formData.get("envVars"));
+
+    // Insert the page into the database
+    const [page] = await db
+      .insert(pagesTable)
+      .values({
+        accountLogin: params.login,
+        repo,
+        name,
+        branch,
+        buildScript,
+        buildOutputDir,
+      })
+      .returning({ id: pagesTable.id });
+
+    // Insert environment variables into the database
+    if (envVars.length > 0) {
+      await db.insert(envsTable).values(
+        envVars.map((env) => ({
+          pageId: page.id,
+          name: env.name,
+          value: env.value,
+        }))
+      );
+    }
+
+    return { success: true };
+  },
+};

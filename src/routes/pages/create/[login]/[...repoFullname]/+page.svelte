@@ -1,5 +1,7 @@
 <script>
+  import { enhance } from "$app/forms";
   export let data;
+  export let pages; // Assume `pages` is passed as a prop containing the list of pages
 
   let login = data.login;
   let repoFullname = data.repoFullname;
@@ -17,32 +19,17 @@
   function removeEnvVar(index) {
     envVars = envVars.filter((_, i) => i !== index); // Ensure reactivity by creating a new array
   }
-
-  async function createAndDeploy() {
-    await fetch("/api/pages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        repo: repoFullname,
-        name: pageName,
-        branch,
-        buildScript,
-        buildOutputDir,
-        envVars,
-      }),
-    });
-    goto("/pages");
-  }
 </script>
 
 <h1 class="text-2xl font-bold mb-4">Setup Page for {repoFullname}</h1>
-<form on:submit|preventDefault={createAndDeploy} class="space-y-4">
+<form method="POST" use:enhance class="space-y-4">
   <div>
     <label for="page-name" class="block text-sm font-medium text-gray-700"
       >Page Name:</label
     >
     <input
       id="page-name"
+      name="name"
       type="text"
       bind:value={pageName}
       class="mt-1 block w-full border-gray-300 rounded shadow-sm"
@@ -54,6 +41,7 @@
     >
     <select
       id="branch-select"
+      name="branch"
       bind:value={branch}
       class="mt-1 block w-full border-gray-300 rounded shadow-sm"
     >
@@ -68,6 +56,7 @@
     >
     <textarea
       id="build-script"
+      name="buildScript"
       bind:value={buildScript}
       rows="4"
       placeholder="e.g., npm run build"
@@ -82,6 +71,7 @@
     >
     <input
       id="build-output-dir"
+      name="buildOutputDir"
       type="text"
       bind:value={buildOutputDir}
       placeholder="e.g., dist/"
@@ -96,12 +86,14 @@
       <div class="flex space-x-2 mt-2">
         <input
           type="text"
+          name={`envVars[${index}][name]`}
           placeholder="Name"
           bind:value={env.name}
           class="flex-1 border-gray-300 rounded shadow-sm"
         />
         <input
           type="text"
+          name={`envVars[${index}][value]`}
           placeholder="Value"
           bind:value={env.value}
           class="flex-1 border-gray-300 rounded shadow-sm"
@@ -123,6 +115,7 @@
       Add Variable
     </button>
   </div>
+  <input type="hidden" name="envVars" value={JSON.stringify(envVars)} />
   <button
     type="submit"
     class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"

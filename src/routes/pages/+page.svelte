@@ -26,19 +26,23 @@
     Authorize GitHub Access
   </a>
 {/if}
-<ul class="space-y-4">
-  {#each pages as page}
-    <li class="p-4 bg-white shadow rounded flex justify-between items-center">
-      <div>
-        <strong class="text-lg">{page.name}</strong>
-        <p class="text-sm text-gray-600">{page.repo}/{page.branch}</p>
-      </div>
-      <button
-        on:click={() => deletePage(page.id)}
-        class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-      >
-        Delete
-      </button>
-    </li>
-  {/each}
-</ul>
+{#if pages.length > 0}
+  <ul>
+    {#each pages as page}
+      <li class="flex items-center justify-between border-b py-2">
+        <span>{page.name}</span>
+        <form method="post" action="?/delete">
+          <input type="hidden" name="pageId" value={page.id} />
+          <button
+            type="submit"
+            class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+          >
+            Delete
+          </button>
+        </form>
+      </li>
+    {/each}
+  </ul>
+{:else}
+  <p>No pages available.</p>
+{/if}
