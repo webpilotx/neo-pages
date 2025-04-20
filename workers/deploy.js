@@ -5,6 +5,9 @@ import {
   envsTable,
 } from "../src/lib/server/db/schema";
 import { eq } from "drizzle-orm";
+import { execSync } from "child_process";
+import fs from "fs";
+import path from "path";
 
 const deploymentId = process.argv[2];
 
@@ -14,7 +17,25 @@ if (!deploymentId) {
 }
 
 (async () => {
+  const logDir = path.resolve(`/var/www/neo-pages/logs`);
+  const logFilePath = path.join(logDir, `${deploymentId}.log`);
+
+  // Ensure the log directory exists
+  if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true });
+  }
+
+  const logStream = fs.createWriteStream(logFilePath, { flags: "a" });
+
+  const log = (message) => {
+    const timestamp = new Date().toISOString();
+    logStream.write(`[${timestamp}] ${message}\n`);
+    console.log(message);
+  };
+
   try {
+    log(`Starting deployment process for deployment ID: ${deploymentId}`);
+
     // Fetch deployment details
     const [deployment] = await db
       .select()
@@ -22,7 +43,7 @@ if (!deploymentId) {
       .where(eq(deploymentsTable.id, deploymentId));
 
     if (!deployment) {
-      console.error("Deployment not found.");
+      log("Deployment not found.");
       process.exit(1);
     }
 
@@ -33,7 +54,7 @@ if (!deploymentId) {
       .where(eq(pagesTable.id, deployment.pageId));
 
     if (!page) {
-      console.error("Page not found.");
+      log("Page not found.");
       process.exit(1);
     }
 
@@ -43,21 +64,105 @@ if (!deploymentId) {
       .from(envsTable)
       .where(eq(envsTable.pageId, page.id));
 
-    // Simulate deployment process
-    console.log(`Deploying page: ${page.name}`);
-    console.log(`Branch: ${page.branch}`);
-    console.log(`Build Script: ${page.buildScript}`);
-    console.log(`Environment Variables:`, envVars);
+    const repoUrl = `https://${page.accessToken}@github.com/${page.repo}`;
+    const baseDir = path.resolve(`/var/www/neo-pages/pages`);
+    const repoDir = path.join(baseDir, `${page.id}`); // Simplified path to use only page ID
 
-    // Simulate success
+    // Ensure the base directory exists
+    if (!fs.existsSync(baseDir)) {
+      fs.mkdirSync(baseDir, { recursive: true });
+      log(`Created base directory: ${baseDir}`);
+    }
+
+    // Clone or pull the repository
+    if (!fs.existsSync(repoDir)) {
+      log(`Cloning repository: ${repoUrl} (branch: ${page.branch})`);
+      execSync(`git clone --branch ${page.branch} ${repoUrl} ${repoDir}`, {
+        stdio: "inherit",
+      });
+    } else {
+      log(`Pulling latest changes for repository: ${repoUrl}`);
+      execSync(`git -C ${repoDir} reset --hard`, { stdio: "inherit" });
+      execSync(`git -C ${repoDir} checkout ${page.branch}`, {
+        stdio: "inherit",
+      });
+      execSync(`git -C ${repoDir} pull origin ${page.branch}`, {
+        stdio: "inherit",
+      });
+    }
+
+    // Ensure the correct branch is checked out
+    log(`Checking out branch: ${page.branch}`);
+    execSync(`git -C ${repoDir} checkout ${page.branch}`, { stdio: "inherit" });
+    execSync(`git -C ${repoDir} pull origin ${page.branch}`, {
+      stdio: "inherit",
+    });
+
+    // Write environment variables to .env file
+    const envFilePath = path.join(repoDir, ".env");
+    const envFileContent = envVars
+      .map((env) => `${env.name}=${env.value}`)
+      .join("\n");
+    fs.writeFileSync(envFilePath, envFileContent);
+    log(`Environment variables written to ${envFilePath}`);
+
+    // Run the build script
+    if (page.buildScript) {
+      log(`Running build script: ${page.buildScript}`);
+      execSync(page.buildScript, { cwd: repoDir, stdio: "inherit" });
+    }
+
+    // Determine the Node.js binary path
+    const nodeBinary = process.execPath;
+
+    // Determine the working directory for the service
+    const workingDir = page.buildOutputDir
+      ? path.join(repoDir, page.buildOutputDir)
+      : repoDir;
+
+    // Write systemd service file
+    const serviceFilePath = `${process.env.HOME}/.config/systemd/user/${page.name}-${page.id}.service`; // Include page.id for uniqueness
+    const envVarsContent = envVars
+      .map((env) => `Environment="${env.name}=${env.value}"`)
+      .join("\n");
+    const serviceFileContent = `
+[Unit]
+Description=Service for ${page.name}
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=${repoDir} // Always use repoDir
+ExecStart=${nodeBinary} ${workingDir}/index.js
+Restart=always
+${envVarsContent}
+
+[Install]
+WantedBy=default.target
+    `;
+    fs.mkdirSync(path.dirname(serviceFilePath), { recursive: true }); // Ensure the directory exists
+    fs.writeFileSync(serviceFilePath, serviceFileContent);
+    log(`Systemd service file written to ${serviceFilePath}`);
+
+    // Reload systemd and restart the service at --user level
+    execSync("systemctl --user daemon-reload", { stdio: "inherit" });
+    execSync(`systemctl --user restart ${page.name}-${page.id}.service`, {
+      stdio: "inherit",
+    });
+    execSync(`systemctl --user enable ${page.name}-${page.id}.service`, {
+      stdio: "inherit",
+    });
+    log(`Service ${page.name}-${page.id} restarted and enabled successfully.`);
+
+    // Update deployment status to success
     await db
       .update(deploymentsTable)
       .set({ completedAt: new Date().toISOString(), exitCode: 0 })
       .where(eq(deploymentsTable.id, deploymentId));
 
-    console.log("Deployment completed successfully.");
+    log("Deployment completed successfully.");
   } catch (error) {
-    console.error("Deployment failed:", error);
+    log(`Deployment failed: ${error.message}`);
 
     // Update deployment with failure
     await db
@@ -66,5 +171,7 @@ if (!deploymentId) {
       .where(eq(deploymentsTable.id, deploymentId));
 
     process.exit(1);
+  } finally {
+    logStream.end();
   }
 })();
