@@ -5,6 +5,11 @@
 <nav class="mt-4">
   <ul class="list-disc pl-5">
     <li>
+      <a href={`/pages/${data.pageId}`} class="text-blue-500 hover:underline">
+        Back to Page Overview
+      </a>
+    </li>
+    <li>
       <a
         href={`/pages/${data.pageId}/edit`}
         class="text-blue-500 hover:underline"
