@@ -31,6 +31,9 @@
     {#each pages as page}
       <li class="flex items-center justify-between border-b py-2">
         <span>{page.name}</span>
+        <a href={`/pages/${page.id}`} class="text-blue-500 hover:underline">
+          {page.name}
+        </a>
         <form method="post" action="?/delete">
           <input type="hidden" name="pageId" value={page.id} />
           <button

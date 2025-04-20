@@ -1,4 +1,4 @@
-import { error } from "@sveltejs/kit";
+import { error, redirect } from "@sveltejs/kit";
 import { db } from "$lib/server/db";
 import {
   accountsTable,
@@ -97,6 +97,7 @@ export const actions = {
     // Trigger the Node.js worker for deployment
     triggerDeploymentWorker(deployment.id);
 
-    return { success: true };
+    // Redirect to the deployment log page
+    throw redirect(303, `/pages/${page.id}/deployments/${deployment.id}`);
   },
 };
