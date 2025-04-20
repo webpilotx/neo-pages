@@ -1,25 +1,14 @@
 <script>
-  import { onMount } from "svelte";
-  import { goto } from "$app/navigation";
-  export let params;
+  export let data;
 
-  let login = params.login;
-  let repoFullname = decodeURIComponent(params.repoFullname); // Decode the full repository name
+  let login = data.login;
+  let repoFullname = data.repoFullname;
   let pageName = repoFullname.split("/")[1];
-  let branch = "";
+  let branches = data.branches;
+  let branch = branches.length > 0 ? branches[0].name : "";
   let buildScript = "";
   let buildOutputDir = "";
   let envVars = [{ name: "", value: "" }];
-
-  onMount(async () => {
-    const response = await fetch(
-      `https://api.github.com/repos/${repoFullname}/branches`
-    );
-    const branches = await response.json();
-    if (branches.length > 0) {
-      branch = branches[0].name;
-    }
-  });
 
   function addEnvVar() {
     envVars.push({ name: "", value: "" });
@@ -58,19 +47,23 @@
   </div>
   <div>
     <label class="block text-sm font-medium text-gray-700">Branch:</label>
-    <input
-      type="text"
+    <select
       bind:value={branch}
       class="mt-1 block w-full border-gray-300 rounded shadow-sm"
-    />
+    >
+      {#each branches as branchOption}
+        <option value={branchOption.name}>{branchOption.name}</option>
+      {/each}
+    </select>
   </div>
   <div>
     <label class="block text-sm font-medium text-gray-700">Build Script:</label>
-    <input
-      type="text"
+    <textarea
       bind:value={buildScript}
+      rows="4"
+      placeholder="e.g., npm run build"
       class="mt-1 block w-full border-gray-300 rounded shadow-sm"
-    />
+    ></textarea>
   </div>
   <div>
     <label class="block text-sm font-medium text-gray-700"
@@ -79,6 +72,7 @@
     <input
       type="text"
       bind:value={buildOutputDir}
+      placeholder="e.g., dist/"
       class="mt-1 block w-full border-gray-300 rounded shadow-sm"
     />
   </div>
