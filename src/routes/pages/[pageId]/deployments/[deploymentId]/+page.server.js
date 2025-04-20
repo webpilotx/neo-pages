@@ -4,7 +4,7 @@ import path from "path";
 export async function load({ params }) {
   const { deploymentId } = params;
   const logFilePath = path.resolve(
-    `/var/www/neo-pages/logs/${deploymentId}.log`
+    `${process.cwd()}/logs/${deploymentId}.log` // Use current working directory
   );
 
   if (!fs.existsSync(logFilePath)) {

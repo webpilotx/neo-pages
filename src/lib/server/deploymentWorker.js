@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 
 export function triggerDeploymentWorker(deploymentId) {
-  const logDir = path.resolve(`${process.env.HOME}/neo-pages/logs`); // Use a directory inside the user's home directory
+  const logDir = path.resolve(`${process.cwd()}/logs`); // Use current working directory
   const logFilePath = path.join(logDir, `${deploymentId}.log`);
 
   // Ensure the log directory exists
