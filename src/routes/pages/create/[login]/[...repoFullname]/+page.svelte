@@ -32,6 +32,7 @@
       name="name"
       type="text"
       bind:value={pageName}
+      required
       class="mt-1 block w-full border-gray-300 rounded shadow-sm"
     />
   </div>
@@ -43,6 +44,7 @@
       id="branch-select"
       name="branch"
       bind:value={branch}
+      required
       class="mt-1 block w-full border-gray-300 rounded shadow-sm"
     >
       {#each branches as branchOption}
@@ -89,6 +91,7 @@
           name={`envVars[${index}][name]`}
           placeholder="Name"
           bind:value={env.name}
+          required
           class="flex-1 border-gray-300 rounded shadow-sm"
         />
         <input
@@ -96,6 +99,7 @@
           name={`envVars[${index}][value]`}
           placeholder="Value"
           bind:value={env.value}
+          required
           class="flex-1 border-gray-300 rounded shadow-sm"
         />
         <button
