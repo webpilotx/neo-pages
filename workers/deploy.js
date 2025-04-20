@@ -74,29 +74,31 @@ if (!deploymentId) {
       log(`Created base directory: ${baseDir}`);
     }
 
+    const execWithLogging = (command, options = {}) => {
+      log(`Executing: ${command}`);
+      execSync(command, {
+        stdio: ["ignore", logStream, logStream], // Redirect stdout and stderr to the log stream
+        ...options,
+      });
+    };
+
     // Clone or pull the repository
     if (!fs.existsSync(repoDir)) {
       log(`Cloning repository: ${repoUrl} (branch: ${page.branch})`);
-      execSync(`git clone --branch ${page.branch} ${repoUrl} ${repoDir}`, {
-        stdio: "inherit",
-      });
+      execWithLogging(
+        `git clone --branch ${page.branch} ${repoUrl} ${repoDir}`
+      );
     } else {
       log(`Pulling latest changes for repository: ${repoUrl}`);
-      execSync(`git -C ${repoDir} reset --hard`, { stdio: "inherit" });
-      execSync(`git -C ${repoDir} checkout ${page.branch}`, {
-        stdio: "inherit",
-      });
-      execSync(`git -C ${repoDir} pull origin ${page.branch}`, {
-        stdio: "inherit",
-      });
+      execWithLogging(`git -C ${repoDir} reset --hard`);
+      execWithLogging(`git -C ${repoDir} checkout ${page.branch}`);
+      execWithLogging(`git -C ${repoDir} pull origin ${page.branch}`);
     }
 
     // Ensure the correct branch is checked out
     log(`Checking out branch: ${page.branch}`);
-    execSync(`git -C ${repoDir} checkout ${page.branch}`, { stdio: "inherit" });
-    execSync(`git -C ${repoDir} pull origin ${page.branch}`, {
-      stdio: "inherit",
-    });
+    execWithLogging(`git -C ${repoDir} checkout ${page.branch}`);
+    execWithLogging(`git -C ${repoDir} pull origin ${page.branch}`);
 
     // Write environment variables to .env file
     const envFilePath = path.join(repoDir, ".env");
@@ -109,7 +111,7 @@ if (!deploymentId) {
     // Run the build script
     if (page.buildScript) {
       log(`Running build script: ${page.buildScript}`);
-      execSync(page.buildScript, { cwd: repoDir, stdio: "inherit" });
+      execWithLogging(page.buildScript, { cwd: repoDir });
     }
 
     // Determine the Node.js binary path
@@ -145,13 +147,9 @@ WantedBy=default.target
     log(`Systemd service file written to ${serviceFilePath}`);
 
     // Reload systemd and restart the service at --user level
-    execSync("systemctl --user daemon-reload", { stdio: "inherit" });
-    execSync(`systemctl --user restart ${page.name}-${page.id}.service`, {
-      stdio: "inherit",
-    });
-    execSync(`systemctl --user enable ${page.name}-${page.id}.service`, {
-      stdio: "inherit",
-    });
+    execWithLogging("systemctl --user daemon-reload");
+    execWithLogging(`systemctl --user restart ${page.name}-${page.id}.service`);
+    execWithLogging(`systemctl --user enable ${page.name}-${page.id}.service`);
     log(`Service ${page.name}-${page.id} restarted and enabled successfully.`);
 
     // Update deployment status to success
