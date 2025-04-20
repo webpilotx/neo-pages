@@ -54,7 +54,7 @@ if (!deploymentId) {
       .where(eq(envsTable.pageId, page.id));
 
     const repoUrl = `https://${page.accessToken}@github.com/${page.repo}`;
-    const baseDir = path.resolve(`/var/www/neo-pages/pages`);
+    const baseDir = path.resolve(`${process.env.HOME}/neo-pages/pages`); // Use a directory inside the user's home directory
     const repoDir = path.join(baseDir, `${page.id}`);
 
     const execWithLogging = (command, options = {}) => {
