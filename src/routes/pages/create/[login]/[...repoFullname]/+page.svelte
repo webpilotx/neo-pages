@@ -81,47 +81,49 @@
     />
   </div>
   <div>
-    <label class="block text-sm font-medium text-gray-700"
+    <label for="env-vars-group" class="block text-sm font-medium text-gray-700"
       >Environment Variables:</label
     >
-    {#each envVars as env, index}
-      <div class="flex space-x-2 mt-2">
-        <label for={`env-name-${index}`} class="sr-only">Name</label>
-        <input
-          id={`env-name-${index}`}
-          type="text"
-          name={`envVars[${index}][name]`}
-          placeholder="Name"
-          bind:value={env.name}
-          required
-          class="flex-1 border-gray-300 rounded shadow-sm"
-        />
-        <label for={`env-value-${index}`} class="sr-only">Value</label>
-        <input
-          id={`env-value-${index}`}
-          type="text"
-          name={`envVars[${index}][value]`}
-          placeholder="Value"
-          bind:value={env.value}
-          required
-          class="flex-1 border-gray-300 rounded shadow-sm"
-        />
-        <button
-          type="button"
-          on:click={() => removeEnvVar(index)}
-          class="bg-red-500 text-white px-2 rounded hover:bg-red-600"
-        >
-          Remove
-        </button>
-      </div>
-    {/each}
-    <button
-      type="button"
-      on:click={addEnvVar}
-      class="mt-2 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-    >
-      Add Variable
-    </button>
+    <div id="env-vars-group">
+      {#each envVars as env, index}
+        <div class="flex space-x-2 mt-2">
+          <label for={`env-name-${index}`} class="sr-only">Name</label>
+          <input
+            id={`env-name-${index}`}
+            type="text"
+            name={`envVars[${index}][name]`}
+            placeholder="Name"
+            bind:value={env.name}
+            required
+            class="flex-1 border-gray-300 rounded shadow-sm"
+          />
+          <label for={`env-value-${index}`} class="sr-only">Value</label>
+          <input
+            id={`env-value-${index}`}
+            type="password"
+            name={`envVars[${index}][value}`}
+            placeholder="Value"
+            bind:value={env.value}
+            required
+            class="flex-1 border-gray-300 rounded shadow-sm"
+          />
+          <button
+            type="button"
+            on:click={() => removeEnvVar(index)}
+            class="bg-red-500 text-white px-2 rounded hover:bg-red-600"
+          >
+            Remove
+          </button>
+        </div>
+      {/each}
+      <button
+        type="button"
+        on:click={addEnvVar}
+        class="mt-2 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+      >
+        Add Variable
+      </button>
+    </div>
   </div>
   <input type="hidden" name="envVars" value={JSON.stringify(envVars)} />
   <button
